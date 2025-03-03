@@ -1,0 +1,6 @@
+pillow
+requests
+pandas
+opencv-python
+numpy
+os
