@@ -82,8 +82,8 @@ def creat_name_frames(name, home):
 
 
 
-def get_frames_with_data(game_id):
-    df_game_data = parse_data(game_id, True)
+def get_frames_with_data(game_id,  home_first):
+    df_game_data = parse_data(game_id, home_first)
     images_names = []
     images_results = []
     team = "-"
@@ -91,23 +91,27 @@ def get_frames_with_data(game_id):
     teams = df_game_data['Player_team'].unique()
     for index, row in df_game_data.iterrows():
         #print(row['player'], row['score'])
-        images_results.append(result_frames(teams[0], teams[1], scores[0], scores[1], scores[2], scores[3], " "))
         point = check_point(str(row['Throw_points']))
+        if point[0] != '-':
+            images_results.append(result_frames(teams[0], teams[1], scores[0], scores[1], scores[2], scores[3], " "))
         if team == "-":
             team = row['Player_team']
         if team == row['Player_team']:
-            images_names.append(creat_name_frames(row['Name'], 1))
+            if point[0] != '-':
+                images_names.append(creat_name_frames(row['Name'], 1))
             if row['Game_round'] == 1:
                 scores[0] += point[2]
             elif row['Game_round'] == 2:
                 scores[2] += point[2]
         else:
-            images_names.append(creat_name_frames(row['Name'], 0))
+            if point[0] != '-':
+                images_names.append(creat_name_frames(row['Name'], 0))
             if row['Game_round'] == 1:
                 scores[1] += point[2]
             elif row['Game_round'] == 2:
                 scores[3] += point[2]
-        images_results.append(result_frames(teams[0], teams[1], scores[0], scores[1], scores[2], scores[3], str(point[0]))) 
+        if point[0] != '-':
+            images_results.append(result_frames(teams[0], teams[1], scores[0], scores[1], scores[2], scores[3], str(point[0]))) 
     return [images_names, images_results]
 
 def check_point(point):
@@ -121,6 +125,8 @@ def check_point(point):
     except ValueError:
         if points[0] == "e":
             return False
+        if points[0] == "-":
+            points[2] = 1
     return points
 
 def create_video(frames, fps, duration, name):
@@ -216,7 +222,9 @@ game_id = 29164
 fps = 30
 names_duration = [7,7] # seconds
 results_duration = [5,2] # seconds
-
-frames = get_frames_with_data(game_id)
+home_first = False
+print("Luodaan kuvia")
+frames = get_frames_with_data(game_id, home_first)
+print("Luodaan videoita")
 create_video(frames[0], fps, names_duration, 'names_' + str(game_id))
-#create_video(frames[1], fps, results_duration, 'results_' + str(game_id))
+create_video(frames[1], fps, results_duration, 'results_' + str(game_id))
