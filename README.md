@@ -3,12 +3,12 @@
 Tämä python scripti luo kaksi tiedostoa: Yhden pelaajista ja toisen pelitilanteesta:
 
 Miten ajaa:
-	- Hae pelin id https://pinq.kapsi.fi sivulta. (avaa haluamasi peli ja katso mistä apista tiedot haetaan)
+- Hae pelin id https://pinq.kapsi.fi sivulta. (avaa haluamasi peli ja katso mistä apista tiedot haetaan)
 	Osotie on muotoa: https://pinq.kapsi.fi/DK/api/data/game/********
 	loppu osuus on pelin id
-	- korvaa tiedostosta muuttuja 'game_id' uudelle id:llä
-	- aja ohjelma.
-	- profit
+- korvaa tiedostosta muuttuja 'game_id' uudella id:llä
+- aja scripti
+- profit
 
 Huomiota:
 - Luo tiedostot sinne missä python scriptikin on
