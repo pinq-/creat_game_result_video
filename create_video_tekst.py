@@ -211,8 +211,12 @@ def result_frames(home_team, away_team, home_first_round, away_first_round, home
     #img.show()
     return img
 
-game_id = 29163
+#start settings
+game_id = 29164
+fps = 30
+names_duration = [7,7] # seconds
+results_duration = [5,2] # seconds
+
 frames = get_frames_with_data(game_id)
-create_video(frames[0], 30, [7, 7], 'names_' + str(game_id))
-#create_video(frames[1], 30, [5, 2], 'results_' + str(game_id))
-#second_layout()
+create_video(frames[0], fps, names_duration, 'names_' + str(game_id))
+#create_video(frames[1], fps, results_duration, 'results_' + str(game_id))
