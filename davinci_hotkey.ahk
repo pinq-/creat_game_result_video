@@ -1,6 +1,3 @@
-#SingleInstance force
-#NoEnv
-
 
 +b::
     SendInput {Ctrl down}b{Ctrl up}
