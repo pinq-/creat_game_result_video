@@ -1,5 +1,5 @@
 
-+b::
++x::
     SendInput {Ctrl down}b{Ctrl up}
     SendInput {Shift down}{Left}{Shift up}
     SendInput {Shift down}v{Shift up}

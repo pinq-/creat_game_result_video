@@ -89,22 +89,59 @@ def get_frames_with_data(game_id,  home_first):
             images_results.append(result_frames(teams[0], teams[1], scores[0], scores[1], scores[2], scores[3], str(point[0]))) 
     return [images_names, images_results]
 
-def get_frames_with_data_henkkari():
-    first_player = [[1,2,0,0,2,3,0,2,2,1,1,2,0,0,0,0,2,1,1],[1,1,1,2,3,0,1,1,2,1,0,1,2,2,1,1]]
-    #first_player = [['H', 1, 1, 1, 1, 1], [2, 2, 2, 0, 1, 'H', 1]]
-    second_player = [[1, 2, 0, 2,1, 3, 3, 1,1, 2, 1, 0, 1, 0, 1, 1,],[2, 4, 1, 1,3, 0, 1, 1, 2, 0, 0, 1,0, 1, 2, 1, ]]
-    #second_player = [[0, 1, 0, 0, 0, 1, 1], [1, 2, 0, 3, 1, 1]]
 
+
+def get_frames_with_data_henkkari(player_1, player_2):
     images_results = []
-    player = "-"
-    scores = [[-40, -40], [-40, -40]]
-    bats = [[20, 20],[20, 20]]
-    players = ['Karli vK', 'Olli-Pekka H']
+    first_throw_n = 0
+    second_throw_n = 0
+    player_turn_start = 1
+    live_result = [[0,0], [0,0]]
+    players = [player_1, player_2]
+    for game_round in range(1,3):
+        first_thorws_n = len(player_1[game_round]["throws"])
+        second_thorws_n = len(player_2[game_round]["throws"])
+        player_turn = 1 - player_turn_start
+        player_turn_start = player_turn
+        anti_player_turn = 1
+        player_throw_n = [0,0]
+        thorws = [player_1[game_round]["throws"], player_2[game_round]["throws"]]
+        while(player_throw_n[0] < first_thorws_n or player_throw_n[1] < second_thorws_n):
+            point = check_point(str(thorws[player_turn][player_throw_n[player_turn]]), True)
+            #print(players[player_turn], point, player_throw_n[player_turn])
+            player_throw_n[player_turn] += 1
+            if point[0] != '-':
+                images_results.append(creat_henkkari_frame(player_1, player_2, " ", live_result))
+            players[player_turn][game_round]["points"] += point[2]
+            players[player_turn][game_round]["kyykkas"] -= point[1]
+            players[player_turn][game_round]["bats"] -= 1
+            # if (players[player_turn][game_round]["bats"] == 0):
+            #     players[player_turn][game_round]["bats"] = players[player_turn][game_round]["points"]
+
+            # Add end result to the result fielt
+            #print(player_throw_n[player_turn], len(thorws[player_turn]), player_turn, live_result)
+            if (player_throw_n[player_turn] == len(thorws[player_turn])): # end result
+                live_result[player_turn][game_round - 1] = players[player_turn][game_round]["result"]
+            if point[0] != '-':
+                images_results.append(creat_henkkari_frame(player_1, player_2, point[0], live_result)) 
+            if (player_throw_n[player_turn] < len(thorws[player_turn])):
+                if (player_throw_n[player_turn] % 4 == 0 and player_throw_n[anti_player_turn] < len(thorws[anti_player_turn])):
+                    anti_player_turn = player_turn
+                    player_turn = 1 - player_turn
+            elif (player_throw_n[anti_player_turn] < len(thorws[anti_player_turn])):
+                anti_player_turn = player_turn
+                player_turn = 1 - player_turn
+    return images_results
+
+
+def generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats):
+    images_results = []
     first_thorws_n = sum(len(l) for l in first_player)
     second_thorws_n = sum(len(l) for l in second_player)
     first_throw_n = 0
     second_throw_n = 0
     player_turn_start = 1
+    live_result = [[0,0], [0,0]]
     for game_round in range(2):
         first_thorws_n = len(first_player[game_round])
         second_thorws_n = len(second_player[game_round])
@@ -114,27 +151,34 @@ def get_frames_with_data_henkkari():
         player_throw_n = [0,0]
         thorws = [first_player[game_round], second_player[game_round]]
         while(player_throw_n[0] < first_thorws_n or player_throw_n[1] < second_thorws_n):
-
             point = check_point(str(thorws[player_turn][player_throw_n[player_turn]]), True)
-            #print(players[player_turn], point, player_throw_n[player_turn])
+            #print(players[player_turn], point, player_throw_n[player_turn], kyykkas)
             player_throw_n[player_turn] += 1
             if point[0] != '-':
-                images_results.append(creat_henkkari_frame(players[0], players[1], bats[0][0], bats[1][0], bats[0][1], bats[1][1], " "))
+                images_results.append(creat_vastakkain_frame(players, bats, kyykkas, " ", live_result))
             scores[player_turn][game_round] += point[2]
-            bats[player_turn][game_round] -= 1
-            if (bats[player_turn][game_round] == 0):
-                bats[player_turn][game_round] = scores[player_turn][game_round]
+            kyykkas[player_turn][game_round] -= point[1]
+            bats[player_turn][game_round] += 1
+            if (player_throw_n[0] == first_thorws_n and player_throw_n[1] == second_thorws_n):
+                live_result[game_round] = results[game_round]
             if point[0] != '-':
-                images_results.append(creat_henkkari_frame(players[0], players[1], bats[0][0], bats[1][0], bats[0][1], bats[1][1], point[0])) 
+                images_results.append(creat_vastakkain_frame(players, bats, kyykkas, point[0], live_result)) 
+
             if (player_throw_n[player_turn] < len(thorws[player_turn])):
-                if (player_throw_n[player_turn] % 4 == 0 and player_throw_n[anti_player_turn] < len(thorws[anti_player_turn])):
+                if (player_throw_n[player_turn] % turn_max_bats == 0 and player_throw_n[anti_player_turn] < len(thorws[anti_player_turn])):
                     anti_player_turn = player_turn
                     player_turn = 1 - player_turn
-            elif (player_throw_n[anti_player_turn] < len(thorws[anti_player_turn])):
+            elif ((player_throw_n[anti_player_turn] -1) < len(thorws[anti_player_turn])):
                 anti_player_turn = player_turn
                 player_turn = 1 - player_turn
+            #return images_results
 
     return images_results
+
+
+
+
+
 
 def check_point(point, multi_2 = False):
     points = [point.lower(), 0, 0]
@@ -195,14 +239,17 @@ def creat_name_frames(name, home):
     #img.show()
     return img
 
-def creat_henkkari_frame(home_player, away_player, home_first_round, away_first_round, home_second_round, away_second_round, throw):  
+def creat_henkkari_frame(player_1, player_2, throw, live_result):  
     # creating new Image object 
     name_w = 700
-    name_h = 100
+    name_h = 150
     img = Image.new("RGB", (name_w + 4, name_h)) 
    
     font = ImageFont.truetype("arial.ttf", size = 30)
     text_color = (0, 0, 0)
+
+    karttu_img = Image.open('Karttu.png')
+    kyykka_img = Image.open('Kyykka.png')
     #text_position = (40, 0)
     G = Image.new('L', (256,256), color = (255)).crop((0, 100, 256, 200))     # 256x256, black, i.e. 0
     B = Image.linear_gradient('L').crop((0, 100, 256, 200))       # 256x256, black at top, white at bottom
@@ -215,8 +262,8 @@ def creat_henkkari_frame(home_player, away_player, home_first_round, away_first_
     draw.line([(0, bg_color), (box_size, bg_color)], fill=color_red, width = 30, joint = "curve")
     draw.line([(name_w - box_size, bg_color), (name_w, bg_color)], fill=color_blue, width = 30, joint = "curve")
     name_h = 6
-    draw.text((box_size / 2, name_h), str(home_player), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2) , name_h), str(away_player), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font)
 
     font_vs = ImageFont.truetype("arial.ttf", size = 25)
     draw.text((name_w / 2, name_h + 15), 'vs.', fill = text_color, anchor="mt", font = font_vs)
@@ -224,26 +271,142 @@ def creat_henkkari_frame(home_player, away_player, home_first_round, away_first_
     result_head_h = name_h + 35
     font_head = ImageFont.truetype("arial.ttf", size = 20)
     head_text_color = "#696969"
-    draw.text((box_size / 2 + 20, result_head_h), "1.      2.     Tulos", fill = head_text_color, anchor="mt", font = font_head)
-    draw.text(((name_w - box_size / 2) - 10, result_head_h), "Tulos      2.      1.", fill = head_text_color, anchor="mt", font = font_head)
+    draw.text((box_size / 2 - 25, result_head_h), "1.      2.", fill = head_text_color, anchor="mt", font = font_head)
+    draw.text(((name_w - box_size / 2) + 10, result_head_h), "      2.      1.", fill = head_text_color, anchor="mt", font = font_head)
 
     result_h = result_head_h + 20
-    draw.text((box_size / 2, result_h), "|      |", fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2), result_h), "|      |", fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
 
-    draw.text((box_size / 2 - 55, result_h), str(home_first_round), fill = text_color, anchor="mt", font = font)
-    draw.text((box_size / 2, result_h), str(home_second_round), fill = text_color, anchor="mt", font = font)
-    draw.text((box_size / 2 + 55, result_h), str(home_first_round + home_second_round), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["bats"]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, result_h), str(player_1[2]["bats"]), fill = text_color, anchor="mt", font = font)
 
-    draw.text(((name_w - box_size / 2) + 55, result_h), str(away_first_round), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2), result_h), str(away_second_round), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2) - 55, result_h), str(away_first_round + away_second_round), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 55, result_h), str(player_2[1]["bats"]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2), result_h), str(player_2[2]["bats"]), fill = text_color, anchor="mt", font = font)
+
+    result_h += 30
+    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+
+    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["kyykkas"]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, result_h), str(player_1[2]["kyykkas"]), fill = text_color, anchor="mt", font = font)
+
+    draw.text(((name_w - box_size / 2) + 55, result_h), str(player_2[1]["kyykkas"]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2), result_h), str(player_2[2]["kyykkas"]), fill = text_color, anchor="mt", font = font)
+
+
+    result_h += 30
+    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+
+    draw.text((box_size / 2 - 55, result_h), str(live_result[0][0]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, result_h), str(live_result[0][1]), fill = text_color, anchor="mt", font = font)
+
+    draw.text(((name_w - box_size / 2) + 55, result_h), str(live_result[1][0]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2), result_h), str(live_result[1][1]), fill = text_color, anchor="mt", font = font)
+
     if throw != " ":
-        font_throw = ImageFont.truetype("arial.ttf", size = 40)
-        draw.text(((name_w / 2), result_h), str(throw), fill = (255, 255, 255), anchor="mt", font = font_throw)
+        font_throw = ImageFont.truetype("arial.ttf", size = 80)
+        draw.text(((name_w / 2) , result_h - 45), str(throw), fill = (0, 0, 0), anchor="mt", font = font_throw)
+        font_throw = ImageFont.truetype("arial.ttf", size = 70)
+        draw.text(((name_w / 2) , result_h - 40), str(throw), fill = (255, 255, 255), anchor="mt", font = font_throw)
     #draw.line([(2, line_h), (name_w + 1, line_h)], fill=team_color, width = 6, joint = "curve")
     #img.show()
+    karttu_scale = 0.5
+    karttu_img = karttu_img.resize((int(karttu_img.width * karttu_scale), int(karttu_img.height * karttu_scale)))
+    img.paste(karttu_img, (25, 50), karttu_img)
+    img.paste(karttu_img, (name_w - 90,50), karttu_img)    
+    kyykka_scale = 0.4
+    kyykka_img = kyykka_img.resize((int(kyykka_img.width * ( kyykka_scale - 0.1)), int(kyykka_img.height * kyykka_scale)))
+    img.paste(kyykka_img, (40, 85), kyykka_img)
+    img.paste(kyykka_img, (name_w - 80, 85), kyykka_img)
     return img
+
+
+def creat_vastakkain_frame(players, bats, kyykas, throw, live_result):  
+    # creating new Image object 
+    name_w = 700
+    name_h = 150
+    img = Image.new("RGB", (name_w + 4, name_h)) 
+   
+    font = ImageFont.truetype("arial.ttf", size = 30)
+    text_color = (0, 0, 0)
+
+    karttu_img = Image.open('Karttu.png')
+    kyykka_img = Image.open('Kyykka.png')
+    #text_position = (40, 0)
+    G = Image.new('L', (256,256), color = (255)).crop((0, 100, 256, 200))     # 256x256, black, i.e. 0
+    B = Image.linear_gradient('L').crop((0, 100, 256, 200))       # 256x256, black at top, white at bottom
+    #R = B.rotate(180)               # 256x256, white at top, black at bottom
+    grad = Image.merge("RGB",(B,B,G)).resize((name_w,name_h))
+    img.paste(grad, (2,-2))
+    draw = ImageDraw.Draw(img)
+    box_size = name_w / 2 - 40
+    bg_color = 15
+    draw.line([(0, bg_color), (box_size, bg_color)], fill=color_red, width = 30, joint = "curve")
+    draw.line([(name_w - box_size, bg_color), (name_w, bg_color)], fill=color_blue, width = 30, joint = "curve")
+    name_h = 6
+    draw.text((box_size / 2, name_h), str(players[0]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) , name_h), str(players[1]), fill = text_color, anchor="mt", font = font)
+
+    font_vs = ImageFont.truetype("arial.ttf", size = 25)
+    draw.text((name_w / 2, name_h + 15), 'vs.', fill = text_color, anchor="mt", font = font_vs)
+    #line_h = 45
+    result_head_h = name_h + 35
+    font_head = ImageFont.truetype("arial.ttf", size = 20)
+    head_text_color = "#696969"
+    draw.text((box_size / 2 - 25, result_head_h), "1.      2.", fill = head_text_color, anchor="mt", font = font_head)
+    draw.text(((name_w - box_size / 2) + 10, result_head_h), "      2.      1.", fill = head_text_color, anchor="mt", font = font_head)
+
+    result_h = result_head_h + 20
+    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+
+    draw.text((box_size / 2 - 55, result_h), str(bats[0][0]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, result_h), str(bats[0][1]), fill = text_color, anchor="mt", font = font)
+
+    draw.text(((name_w - box_size / 2) + 55, result_h), str(bats[1][0]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2), result_h), str(bats[1][1]), fill = text_color, anchor="mt", font = font)
+
+    result_h += 30
+    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+
+    draw.text((box_size / 2 - 55, result_h), str(kyykas[0][0]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, result_h), str(kyykas[0][1]), fill = text_color, anchor="mt", font = font)
+
+    draw.text(((name_w - box_size / 2) + 55, result_h), str(kyykas[1][0]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2), result_h), str(kyykas[1][1]), fill = text_color, anchor="mt", font = font)
+
+    result_h += 30
+    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+
+    draw.text((box_size / 2 - 55, result_h), str(live_result[0][0]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, result_h), str(live_result[1][0]), fill = text_color, anchor="mt", font = font)
+
+    draw.text(((name_w - box_size / 2) + 55, result_h), str(live_result[0][1]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2), result_h), str(live_result[1][1]), fill = text_color, anchor="mt", font = font)
+
+    if throw != " ":
+        font_throw = ImageFont.truetype("arial.ttf", size = 80)
+        draw.text(((name_w / 2) , result_h - 40), str(throw), fill = (0, 0, 0), anchor="mt", font = font_throw)
+        font_throw = ImageFont.truetype("arial.ttf", size = 70)
+        draw.text(((name_w / 2) , result_h - 40), str(throw), fill = (255, 255, 255), anchor="mt", font = font_throw)
+    #draw.line([(2, line_h), (name_w + 1, line_h)], fill=team_color, width = 6, joint = "curve")
+    #img.show()
+    karttu_scale = 0.5
+    karttu_img = karttu_img.resize((int(karttu_img.width * karttu_scale), int(karttu_img.height * karttu_scale)))
+    img.paste(karttu_img, (25, 50), karttu_img)
+    img.paste(karttu_img, (name_w - 90,50), karttu_img)    
+    kyykka_scale = 0.4
+    kyykka_img = kyykka_img.resize((int(kyykka_img.width * ( kyykka_scale - 0.1)), int(kyykka_img.height * kyykka_scale)))
+    img.paste(kyykka_img, (40, 85), kyykka_img)
+    img.paste(kyykka_img, (name_w - 80, 85), kyykka_img)
+    return img
+
+
+
 
 def result_frames(home_team, away_team, home_first_round, away_first_round, home_second_round, away_second_round, throw):  
     # creating new Image object 
@@ -322,15 +485,71 @@ def result_frames(home_team, away_team, home_first_round, away_first_round, home
 
 #Get data from this game id
 game_id = 29164
-fps = 30
+fps = 60
+# scores = [[-80, -80], [-80, -80]]
+# bats = [[0, 0],[0, 0]] 
+# #bats = [[0, 0],[0, 0]] # Vastakkai
+# kyykkas = [[40, 40], [40, 40]]
+max_bats = 20
+turn_max_bats = 4
+# first_player = [[4,4,0,4,6,2,2,2,6,0,2,2,0,3,1,0],[4,3,4,6,5,1,1,2,7,2,1,0,0,2,1,0]]
+# second_player = [[0,1,2,6,0,0,5,1,2,3,3,1,4,3,1,0],[4,1,2,1,0,2,1,3,3,4,4,2,1,3,1,1]]
+# results = [[0, -12], [0, -12]] # [First round first team, second team], second round
+# players = ['Tammer III', 'Seka I']
+
+player_1 = {
+    1:{
+    "points":-80,
+    "bats":20,
+    #"bats":0, # Vastakkain
+    "kyykkas":20, 
+    #"kyykkas":40, #joukkue
+    "throws": [4,0,0,0, 4,1,0,1, 0,1,0,1,  0,0,3,1,  0,1,0,1, ],
+    "result": -4
+    },    
+    2:{
+    "points":-80,
+    "bats":20,
+    #"bats":0, # Vastakkain
+    "kyykkas":20,
+    #"kyykkas":40, #joukkue
+    "throws": [2,3,4,1,1,1,1,1,1,0,2,0,0,1,0,1,1],
+    "result": "x"
+    },
+    "name": 'Karli vK',
+}
+
+player_2 = {
+    1:{
+    "points":-80,
+    "bats":20,
+    #"bats":0, # Vastakkain
+    "kyykkas":20,
+    #"kyykkas":40, #joukkue
+    "throws": [2,3,4,1, 1,1,1,1, 1,0,2,0, 0,1,0,1, 1],
+    "result": 3
+    },    
+    2:{
+    "points":-80,
+    "bats":20,
+    #"bats":0, # Vastakkain
+    "kyykkas":20,
+    #"kyykkas":40, #joukkue
+    "throws": [4,0,0,0,4,1,0,1,0,1,0,1,0,0,3,1,0,1,0,1, ],
+    "result": "x"
+    },
+    "name": 'Karli vK',
+}
 
 names_duration = [7,7] # how meany second first throw lasts and second one
 results_duration = [5,2] # seconds
 home_first = False
 print("Luodaan kuvia")
 #frames = get_frames_with_data(game_id, home_first)
-frames = get_frames_with_data_henkkari()
-create_video(frames, fps, results_duration, 'results_henkkari_')
+frames = get_frames_with_data_henkkari(player_1, player_2)
+#frames = get_frames_with_data_henkkari(first_player, second_player, players, scores, bats, kyykkas)
+#frames = generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, max_bats, turn_max_bats)
+create_video(frames, fps, results_duration, 'results_henkkari_' + player_1["name"] + "-" + player_2["name"])
 
 print("Luodaan videoita")
 #create_video(frames[0], fps, names_duration, 'names_' + str(game_id))
