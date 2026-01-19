@@ -5,6 +5,7 @@ import pandas as pd
 import cv2
 import numpy as np
 import os
+import argparse
 
 
 #HD
@@ -381,16 +382,26 @@ player_2 = {
 
 names_duration = [7,7] # how meany second first throw lasts and second one
 results_duration = [5,2] # seconds
-home_first = False
-print("Luodaan kuvia")
-#pinq.kapsi.fi/kyykka sivulta peli id
-frames = get_frames_with_data(game_id, home_first, player_1, player_2, False)[1]
+def Make_video(game_id, home_first = False, fps = 1):
+    print("Luodaan kuvia pelistä", game_id)
+    #pinq.kapsi.fi/kyykka sivulta peli id
+    frames = get_frames_with_data(game_id, home_first, player_1, player_2, False)[1]
 
-#Kesäpelejä varten
-#frames = get_frames_with_data_henkkari(player_1, player_2)
-#frames = generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats)
+    #Kesäpelejä varten
+    #frames = get_frames_with_data_henkkari(player_1, player_2)
+    #frames = generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats)
 
-print("Luodaan videoita")
-video_name = player_1["name"] + "-" + player_2["name"]
-create_video(frames, fps, results_duration, video_name)
-print("Video valmis nimellä", video_name)
+    print("Luodaan videoita")
+    video_name = player_1["name"] + "-" + player_2["name"]
+    create_video(frames, fps, results_duration, video_name)
+    print("Video valmis nimellä", video_name)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Script that adds 3 numbers from CMD"
+    )
+    parser.add_argument("--game_id", required=True, type=int, help="Hale peli_id sivulta pinq.kapsi.fi/kyykka")
+    parser.add_argument("--fps", required=False, type=int, help= "Kannattaa tämä pitää 1")
+    parser.add_argument("--home_first", required=False, action=argparse.BooleanOptionalAction, help = "Jos pelijärjestys on väärä, vaihda vuoroa tällä")
+    args = parser.parse_args()
+    Make_video(args.game_id, args.home_first, args.fps)
