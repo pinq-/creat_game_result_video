@@ -238,83 +238,49 @@ def creat_ongoing_game_frame(player_1, player_2, throw, live_result):
     # creating new Image object 
     name_w = 700
     name_h = 150
-    img = Image.new("RGB", (name_w + 4, name_h)) 
+    #img = Image.new("RGB", (name_w + 4, name_h)) 
+    img = Image.open('Tausta.png') 
    
-    font = ImageFont.truetype("arial.ttf", size = 30)
+    font_names = ImageFont.truetype("arial.ttf", size = 30)
+    font_points = ImageFont.truetype("arial.ttf", size = 27)
     text_color = (0, 0, 0)
-
-    karttu_img = Image.open('Karttu.png')
-    kyykka_img = Image.open('Kyykka.png')
-    #text_position = (40, 0)
-    G = Image.new('L', (256,256), color = (255)).crop((0, 100, 256, 200))     # 256x256, black, i.e. 0
-    B = Image.linear_gradient('L').crop((0, 100, 256, 200))       # 256x256, black at top, white at bottom
-    #R = B.rotate(180)               # 256x256, white at top, black at bottom
-    grad = Image.merge("RGB",(B,B,G)).resize((name_w,name_h))
-    img.paste(grad, (2,-2))
     draw = ImageDraw.Draw(img)
-    box_size = name_w / 2 - 40
+    box_size = name_w / 2
     bg_color = 15
-    draw.line([(0, bg_color), (box_size, bg_color)], fill=color_red, width = 30, joint = "curve")
-    draw.line([(name_w - box_size, bg_color), (name_w, bg_color)], fill=color_blue, width = 30, joint = "curve")
+
+    #Team names
     name_h = 6
-    draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
+    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
 
-    font_vs = ImageFont.truetype("arial.ttf", size = 25)
-    draw.text((name_w / 2, name_h + 15), 'vs.', fill = text_color, anchor="mt", font = font_vs)
-    #line_h = 45
-    result_head_h = name_h + 35
-    font_head = ImageFont.truetype("arial.ttf", size = 20)
-    head_text_color = "#696969"
-    draw.text((box_size / 2 - 25, result_head_h), "1.      2.", fill = head_text_color, anchor="mt", font = font_head)
-    draw.text(((name_w - box_size / 2) + 10, result_head_h), "      2.      1.", fill = head_text_color, anchor="mt", font = font_head)
+    #Bats left
+    result_h = name_h + 55
+    draw.text((box_size / 2 - 50, result_h), str(player_1[1]["bats"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text((box_size / 2 - 10, result_h), str(player_1[2]["bats"]), fill = text_color, anchor="mt", font = font_points)
 
-    result_h = result_head_h + 20
-    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 45, result_h), str(player_2[2]["bats"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text(((name_w - box_size / 2), result_h), str(player_2[1]["bats"]), fill = text_color, anchor="mt", font = font_points)
 
-    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["bats"]), fill = text_color, anchor="mt", font = font)
-    draw.text((box_size / 2, result_h), str(player_1[2]["bats"]), fill = text_color, anchor="mt", font = font)
-
-    draw.text(((name_w - box_size / 2) + 55, result_h), str(player_2[1]["bats"]), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2), result_h), str(player_2[2]["bats"]), fill = text_color, anchor="mt", font = font)
-
+    #Kyykkas left
     result_h += 30
-    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2 - 50, result_h), str(player_1[1]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text((box_size / 2 - 10, result_h), str(player_1[2]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
 
-    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["kyykkas"]), fill = text_color, anchor="mt", font = font)
-    draw.text((box_size / 2, result_h), str(player_1[2]["kyykkas"]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 45, result_h), str(player_2[2]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text(((name_w - box_size / 2), result_h), str(player_2[1]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
 
-    draw.text(((name_w - box_size / 2) + 55, result_h), str(player_2[1]["kyykkas"]), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2), result_h), str(player_2[2]["kyykkas"]), fill = text_color, anchor="mt", font = font)
-
-
+    # Team points
     result_h += 30
-    draw.text((box_size / 2 - 30, result_h), "|", fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2) + 30, result_h), "|", fill = text_color, anchor="mt", font = font)
+    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["points"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text((box_size / 2 - 10, result_h), str(player_1[2]["points"]), fill = text_color, anchor="mt", font = font_points)
 
-    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["points"]), fill = text_color, anchor="mt", font = font)
-    draw.text((box_size / 2, result_h), str(player_1[2]["points"]), fill = text_color, anchor="mt", font = font)
+    draw.text(((name_w - box_size / 2) + 45, result_h), str(player_2[2]["points"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text(((name_w - box_size / 2) , result_h), str(player_2[1]["points"]), fill = text_color, anchor="mt", font = font_points)
 
-    draw.text(((name_w - box_size / 2) + 55, result_h), str(player_2[1]["points"]), fill = text_color, anchor="mt", font = font)
-    draw.text(((name_w - box_size / 2), result_h), str(player_2[2]["points"]), fill = text_color, anchor="mt", font = font)
-
+    #Throw point
     if throw != " ":
         font_throw = ImageFont.truetype("arial.ttf", size = 80)
-        draw.text(((name_w / 2) , result_h - 45), str(throw), fill = (0, 0, 0), anchor="mt", font = font_throw)
-        font_throw = ImageFont.truetype("arial.ttf", size = 70)
-        draw.text(((name_w / 2) , result_h - 40), str(throw), fill = (255, 255, 255), anchor="mt", font = font_throw)
-    #draw.line([(2, line_h), (name_w + 1, line_h)], fill=team_color, width = 6, joint = "curve")
-    #img.show()
-    karttu_scale = 0.5
-    karttu_img = karttu_img.resize((int(karttu_img.width * karttu_scale), int(karttu_img.height * karttu_scale)))
-    img.paste(karttu_img, (25, 50), karttu_img)
-    img.paste(karttu_img, (name_w - 90,50), karttu_img)    
-    kyykka_scale = 0.4
-    kyykka_img = kyykka_img.resize((int(kyykka_img.width * ( kyykka_scale - 0.1)), int(kyykka_img.height * kyykka_scale)))
-    img.paste(kyykka_img, (40, 85), kyykka_img)
-    img.paste(kyykka_img, (name_w - 80, 85), kyykka_img)
+        draw.text(((name_w / 2) , result_h - 45), str(throw), fill = (0, 0, 0), anchor="mt", font = font_throw, stroke_width = 2, stroke_fill = (255,255,255))
     return img
 
 
