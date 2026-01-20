@@ -73,8 +73,8 @@ def create_order(length, phase, home_first):
 
 def get_frames_with_data(game_id,  home_first, player_1, player_2, generate_names = False):
     df_game_data = parse_data(game_id, home_first, player_1, player_2)
-    images_names = []
-    images_results = []
+    images_names = ['Names']
+    images_results = ['Game']
     team = "-"
     live_result = [[0,0], [0,0]]
     Game_round = True
@@ -208,27 +208,15 @@ def generate_fames_vastaikkain(first_player, second_player, players, results, ky
 
 #GENERATE FAMRES###################################################
 def creat_name_frame(name, home):  
-    # creating new Image object 
-    name_w = 300
-    name_h = 50
-    img = Image.new("RGB", (name_w + 4, name_h)) 
-   
+
     font = ImageFont.truetype("arial.ttf", size = 30)
     text_color = (0, 0, 0)
     if home:
-        team_color = color_red
+        img = Image.open('Nimi_tausta_home.png') 
     else:
-        team_color = color_blue
-    #text_position = (40, 0)
-    G = Image.new('L', (256,256), color = (255)).crop((0, 100, 256, 200))     # 256x256, black, i.e. 0
-    B = Image.linear_gradient('L').crop((0, 100, 256, 200))       # 256x256, black at top, white at bottom
-    #R = B.rotate(180)               # 256x256, white at top, black at bottom
-    grad = Image.merge("RGB",(B,B,G)).resize((name_w,name_h))
-    img.paste(grad, (2,-2))
+        img = Image.open('Nimi_tausta_away.png') 
     draw = ImageDraw.Draw(img)
-    draw.text((20, 0), str(name), fill = text_color, stroke_width = 1, font = font)
-    line_h = 45
-    draw.line([(2, line_h), (name_w + 1, line_h)], fill=team_color, width = 6, joint = "curve")
+    draw.text((5, 5), str(name), fill = text_color, stroke_width = 1, font = font)
     #img.show()
     return img
 
@@ -288,9 +276,9 @@ def creat_ongoing_game_frame(player_1, player_2, throw, live_result):
 def create_video(frames, fps, duration, name):
     duration_flip = 0
     videodims = frames[0].size
-    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    cwd = os.getcwd()
-    print(cwd)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    #cwd = os.getcwd()
+    #print(cwd)
     video = cv2.VideoWriter(name + ".mp4",fourcc, fps,videodims)
     for frame in frames:
         for fps_frame in range(duration[duration_flip] * fps):
@@ -382,26 +370,32 @@ player_2 = {
 
 names_duration = [7,7] # how meany second first throw lasts and second one
 results_duration = [5,2] # seconds
-def Make_video(game_id, home_first = False, fps = 1):
+def Make_video(game_id, names, home_first, fps):
     print("Luodaan kuvia pelistä", game_id)
     #pinq.kapsi.fi/kyykka sivulta peli id
-    frames = get_frames_with_data(game_id, home_first, player_1, player_2, False)[1]
+    frames = get_frames_with_data(game_id, home_first, player_1, player_2, names)
 
     #Kesäpelejä varten
     #frames = get_frames_with_data_henkkari(player_1, player_2)
     #frames = generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats)
 
     print("Luodaan videoita")
-    video_name = player_1["name"] + "-" + player_2["name"]
-    create_video(frames, fps, results_duration, video_name)
-    print("Video valmis nimellä", video_name)
+    for frame_set in frames:
+        video_name = frame_set[0] + "_" + player_1["name"] + "-" + player_2["name"]
+        frame_set.pop(0)
+        if frame_set:
+            create_video(frame_set, fps, results_duration, video_name)
+            print("Video valmis nimellä", video_name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script that adds 3 numbers from CMD"
     )
-    parser.add_argument("--game_id", required=True, type=int, help="Hale peli_id sivulta pinq.kapsi.fi/kyykka")
-    parser.add_argument("--fps", required=False, type=int, help= "Kannattaa tämä pitää 1")
-    parser.add_argument("--home_first", required=False, action=argparse.BooleanOptionalAction, help = "Jos pelijärjestys on väärä, vaihda vuoroa tällä")
+    parser.add_argument("--game_id", type=int, help="Hale peli_id sivulta pinq.kapsi.fi/kyykka")
+    parser.add_argument("--fps", type=int, help= "Kannattaa tämä pitää 1")
+    parser.add_argument("--names", action=argparse.BooleanOptionalAction, help= "Generoi myös nimet taustan")
+    parser.add_argument("--home_first", action=argparse.BooleanOptionalAction, help = "Jos pelijärjestys on väärä, vaihda vuoroa tällä")
     args = parser.parse_args()
-    Make_video(args.game_id, args.home_first, args.fps)
+    if not args.fps:
+         args.fps = 1
+    Make_video(args.game_id, args.names, args.home_first, args.fps)
