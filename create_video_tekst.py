@@ -86,6 +86,8 @@ def get_frames_with_data(game_id,  home_first, player_1, player_2, generate_name
             player_1[1]["points"] = player_1[1]["result"]
             player_2[1]["points"] = player_2[1]["result"]
             Game_round = False
+            images_results += [creat_round_frame('Erä 1.', player_1[1]["result"], player_2[1]["result"], player_1, player_2)] *2
+
         if point[0] != '-':
             images_results.append(creat_ongoing_game_frame(player_1, player_2, " ", live_result))
 
@@ -117,7 +119,9 @@ def get_frames_with_data(game_id,  home_first, player_1, player_2, generate_name
             player_2[2]["points"] = player_2[2]["result"]
         if point[0] != '-':
             images_results.append(creat_ongoing_game_frame(player_1, player_2, str(point[0]), live_result))
-            #images_results.append(result_frames(teams[0], teams[1], scores[0], scores[1], scores[2], scores[3], str(point[0]))) 
+
+    images_results += [creat_round_frame('Erä 2.', player_1[2]["result"], player_2[2]["result"], player_1, player_2)] *2
+    images_results += [creat_round_frame('Lopputulos', int(player_1[1]["result"]) + int(player_1[2]["result"]), int(player_2[1]["result"]) + int(player_2[2]["result"]), player_1, player_2)] *2
     return [images_names, images_results]
 
 
@@ -209,14 +213,38 @@ def generate_fames_vastaikkain(first_player, second_player, players, results, ky
 #GENERATE FAMRES###################################################
 def creat_name_frame(name, home):  
 
-    font = ImageFont.truetype("arial.ttf", size = 30)
+    font = ImageFont.truetype("arial.ttf", size = 32)
     text_color = (0, 0, 0)
     if home:
         img = Image.open('Nimi_tausta_home.png') 
     else:
         img = Image.open('Nimi_tausta_away.png') 
     draw = ImageDraw.Draw(img)
-    draw.text((5, 5), str(name), fill = text_color, stroke_width = 1, font = font)
+    draw.text((5, 40), str(name), fill = text_color, anchor="ls",  font = font)
+    #img.show()
+    return img
+
+def creat_round_frame(round_name, result_home, result_away, player_1, player_2):  
+
+    font_points_round = ImageFont.truetype("arial.ttf", size = 80)
+    font_names = ImageFont.truetype("arial.ttf", size = 30)
+    font_round = ImageFont.truetype("arial.ttf", size = 40)
+    text_color = (0, 0, 0)
+    img = Image.open('Tausta_tyhja.png') 
+    name_w, name_h = img.size
+    draw = ImageDraw.Draw(img)
+    box_size = name_w / 2
+
+    name_h = 10
+    draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
+    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
+
+    round_text_h = 80
+    draw.text((box_size, round_text_h), round_name, fill = text_color, anchor="ms",  font = font_round)
+
+    results_text_h = 50
+    draw.text(((box_size/2 - 60), results_text_h), str(result_home), fill = text_color,stroke_width = 1, font = font_points_round)
+    draw.text(((name_w -box_size/2 -40), results_text_h), str(result_away), fill = text_color,stroke_width = 1, font = font_points_round)
     #img.show()
     return img
 
@@ -225,11 +253,9 @@ def creat_name_frame(name, home):
 
 def creat_ongoing_game_frame(player_1, player_2, throw, live_result):  
     # creating new Image object 
-    name_w = 700
-    name_h = 150
-    #img = Image.new("RGB", (name_w + 4, name_h)) 
     img = Image.open('Tausta.png') 
-   
+    name_w, name_h = img.size
+
     font_names = ImageFont.truetype("arial.ttf", size = 30)
     font_points = ImageFont.truetype("arial.ttf", size = 27)
     text_color = (0, 0, 0)
@@ -238,7 +264,7 @@ def creat_ongoing_game_frame(player_1, player_2, throw, live_result):
     bg_color = 15
 
     #Team names
-    name_h = 6
+    name_h = 10
     draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
     draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
 
@@ -269,7 +295,7 @@ def creat_ongoing_game_frame(player_1, player_2, throw, live_result):
     #Throw point
     if throw != " ":
         font_throw = ImageFont.truetype("arial.ttf", size = 80)
-        draw.text(((name_w / 2) , result_h - 45), str(throw), fill = (0, 0, 0), anchor="mt", font = font_throw, stroke_width = 2, stroke_fill = (255,255,255))
+        draw.text(((name_w / 2) , result_h - 45), str(throw.upper()), fill = (0, 0, 0), anchor="mt", font = font_throw, stroke_width = 2, stroke_fill = (255,255,255))
     return img
 
 
@@ -382,9 +408,14 @@ def Make_video(game_id, names, home_first, fps):
     print("Luodaan videoita")
     for frame_set in frames:
         video_name = frame_set[0] + "_" + player_1["name"] + "-" + player_2["name"]
+        if frame_set[0] == 'Names':
+            clip_duration = names_duration
+        else:
+            clip_duration = results_duration
+
         frame_set.pop(0)
         if frame_set:
-            create_video(frame_set, fps, results_duration, video_name)
+            create_video(frame_set, fps, clip_duration, video_name)
             print("Video valmis nimellä", video_name)
 
 if __name__ == "__main__":
