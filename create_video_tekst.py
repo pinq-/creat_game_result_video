@@ -17,6 +17,11 @@ color_red = "#eb2828"
 color_blue = "#4ee711"
 #color_blue = "#117de7"
 
+color_team_yello = '#FFFF00'
+color_team_blue = '#00AEEF'
+
+font_select = 'DAGGERSQUARE.otf'
+
 
 w, h = int(HD_w / 4), int(HD_h / 7)
 
@@ -51,7 +56,6 @@ def parse_data(game_id, home_first, player_1, player_2):
         player_1[1]["result"] = game_data['Results'][0]['Away_round1']
         player_2[2]["result"] = game_data['Results'][0]['Home_round2']
         player_1[2]["result"] = game_data['Results'][0]['Away_round2']
-    #print(out.head(40))
     return out
 
 def create_order(length, phase, home_first):
@@ -89,7 +93,7 @@ def get_frames_with_data(game_id,  home_first, player_1, player_2, generate_name
             images_results += [creat_round_frame('Erä 1.', player_1[1]["result"], player_2[1]["result"], player_1, player_2)] *2
 
         if point[0] != '-':
-            images_results.append(creat_ongoing_game_frame(player_1, player_2, " ", live_result))
+            images_results.append(creat_ongoing_game_frame(player_1, player_2, " ", live_result, row['Game_round']))
 
             #images_results.append(result_frames(teams, scores[0], scores[1], scores[2], scores[3], " "))
         if team == "-":
@@ -118,7 +122,7 @@ def get_frames_with_data(game_id,  home_first, player_1, player_2, generate_name
             player_1[2]["points"] = player_1[2]["result"]
             player_2[2]["points"] = player_2[2]["result"]
         if point[0] != '-':
-            images_results.append(creat_ongoing_game_frame(player_1, player_2, str(point[0]), live_result))
+            images_results.append(creat_ongoing_game_frame(player_1, player_2, str(point[0]), live_result, row['Game_round']))
 
     images_results += [creat_round_frame('Erä 2.', player_1[2]["result"], player_2[2]["result"], player_1, player_2)] *2
     images_results += [creat_round_frame('Lopputulos', int(player_1[1]["result"]) + int(player_1[2]["result"]), int(player_2[1]["result"]) + int(player_2[2]["result"]), player_1, player_2)] *2
@@ -213,7 +217,7 @@ def generate_fames_vastaikkain(first_player, second_player, players, results, ky
 #GENERATE FAMRES###################################################
 def creat_name_frame(name, home):  
 
-    font = ImageFont.truetype("arial.ttf", size = 32)
+    font = ImageFont.truetype(font_select, size = 32)
     text_color = (0, 0, 0)
     if home:
         img = Image.open('Nimi_tausta_home.png') 
@@ -226,76 +230,93 @@ def creat_name_frame(name, home):
 
 def creat_round_frame(round_name, result_home, result_away, player_1, player_2):  
 
-    font_points_round = ImageFont.truetype("arial.ttf", size = 80)
-    font_names = ImageFont.truetype("arial.ttf", size = 30)
-    font_round = ImageFont.truetype("arial.ttf", size = 40)
+    font_points_round = ImageFont.truetype(font_select, size = 80)
+    font_names = ImageFont.truetype(font_select, size = 30)
+    font_round = ImageFont.truetype(font_select, size = 35)
     text_color = (0, 0, 0)
     img = Image.open('Tausta_tyhja.png') 
     name_w, name_h = img.size
     draw = ImageDraw.Draw(img)
     box_size = name_w / 2
 
-    name_h = 10
+    name_h = 5
     draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
     draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
 
-    round_text_h = 80
+    round_text_h = 100
     draw.text((box_size, round_text_h), round_name, fill = text_color, anchor="ms",  font = font_round)
 
-    results_text_h = 50
-    draw.text(((box_size/2 - 60), results_text_h), str(result_home), fill = text_color,stroke_width = 1, font = font_points_round)
-    draw.text(((name_w -box_size/2 -40), results_text_h), str(result_away), fill = text_color,stroke_width = 1, font = font_points_round)
+    results_text_h = 60
+    draw.text(((box_size/2), results_text_h), str(result_home), anchor="mt", fill = text_color,stroke_width = 1, font = font_points_round)
+    draw.text(((name_w -box_size/2), results_text_h), str(result_away), anchor="mt", fill = text_color,stroke_width = 1, font = font_points_round)
     #img.show()
     return img
 
 
 
 
-def creat_ongoing_game_frame(player_1, player_2, throw, live_result):  
+def creat_ongoing_game_frame(player_1, player_2, throw, live_result, rount_int):  
     # creating new Image object 
     img = Image.open('Tausta.png') 
     name_w, name_h = img.size
 
-    font_names = ImageFont.truetype("arial.ttf", size = 30)
-    font_points = ImageFont.truetype("arial.ttf", size = 27)
+    font_names = ImageFont.truetype(font_select, size = 30)
+    font_points = ImageFont.truetype(font_select, size = 27)
+    font_points_now = ImageFont.truetype(font_select, size = 80)
+    font_points_old = ImageFont.truetype(font_select, size = 40)
     text_color = (0, 0, 0)
     draw = ImageDraw.Draw(img)
     box_size = name_w / 2
-    bg_color = 15
 
     #Team names
-    name_h = 10
+    name_h = 5
     draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
     draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
 
     #Bats left
-    result_h = name_h + 55
-    draw.text((box_size / 2 - 50, result_h), str(player_1[1]["bats"]), fill = text_color, anchor="mt", font = font_points)
-    draw.text((box_size / 2 - 10, result_h), str(player_1[2]["bats"]), fill = text_color, anchor="mt", font = font_points)
+    result_h = name_h + 117
+    draw.text((box_size / 2 - 100, result_h), str(player_1[rount_int]["bats"]), fill = text_color, anchor="mt", font = font_points)
+    #draw.text((box_size / 2 - 10, result_h), str(player_1[2]["bats"]), fill = text_color, anchor="mt", font = font_points)
 
-    draw.text(((name_w - box_size / 2) + 45, result_h), str(player_2[2]["bats"]), fill = text_color, anchor="mt", font = font_points)
-    draw.text(((name_w - box_size / 2), result_h), str(player_2[1]["bats"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text(((name_w - box_size / 2) + 100, result_h), str(player_2[rount_int]["bats"]), fill = text_color, anchor="mt", font = font_points)
+    #draw.text(((name_w - box_size / 2), result_h), str(player_2[1]["bats"]), fill = text_color, anchor="mt", font = font_points)
 
     #Kyykkas left
-    result_h += 30
-    draw.text((box_size / 2 - 50, result_h), str(player_1[1]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
-    draw.text((box_size / 2 - 10, result_h), str(player_1[2]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
-
-    draw.text(((name_w - box_size / 2) + 45, result_h), str(player_2[2]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
-    draw.text(((name_w - box_size / 2), result_h), str(player_2[1]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
+    #result_h += 30
+    draw.text((box_size / 2, result_h), str(player_1[rount_int]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
+    draw.text(((name_w - box_size / 2), result_h), str(player_2[rount_int]["kyykkas"]), fill = text_color, anchor="mt", font = font_points)
+    
+    #points_diff
+    points_diff = (player_1[1]["points"] + player_1[2]["points"]) - (player_2[1]["points"] + player_2[2]["points"])
+    points_diff_color = (255,255,255)
+    if points_diff > 0:
+        draw.text(((name_w / 2 - 110), result_h), str(abs(points_diff)), fill = points_diff_color, anchor="mt", font = font_points, stroke_width = 1, stroke_fill = (0,0,0))
+    elif points_diff < 0:
+        draw.text(((name_w / 2 + 110), result_h), str(abs(points_diff)), fill = points_diff_color, anchor="mt", font = font_points, stroke_width = 1, stroke_fill = (0,0,0))
+    elif points_diff == 0:
+        draw.text(((name_w / 2 - 110), result_h), str(0), fill = points_diff_color, anchor="mt", font = font_points, stroke_width = 1, stroke_fill = (0,0,0))
+        draw.text(((name_w / 2 + 110), result_h), str(0), fill = points_diff_color, anchor="mt", font = font_points, stroke_width = 1, stroke_fill = (0,0,0))
 
     # Team points
-    result_h += 30
-    draw.text((box_size / 2 - 55, result_h), str(player_1[1]["points"]), fill = text_color, anchor="mt", font = font_points)
-    draw.text((box_size / 2 - 10, result_h), str(player_1[2]["points"]), fill = text_color, anchor="mt", font = font_points)
-
-    draw.text(((name_w - box_size / 2) + 45, result_h), str(player_2[2]["points"]), fill = text_color, anchor="mt", font = font_points)
-    draw.text(((name_w - box_size / 2) , result_h), str(player_2[1]["points"]), fill = text_color, anchor="mt", font = font_points)
+    #result_h += 30
+    points_h = 45
+    pre_points_color =  (110, 110, 110)
+    if rount_int == 1:
+        draw.text((box_size / 2, points_h), str(player_1[1]["points"]), fill = text_color, anchor="mt", font = font_points_now)
+        draw.text(((name_w - box_size / 2), points_h), str(player_2[1]["points"]), fill = text_color, anchor="mt", font = font_points_now)
+        draw.text((name_w / 2, result_h - 5), 'Erä 1.', fill = text_color, anchor="mt", font = font_points)
+    else:    
+        draw.text((box_size / 2, points_h), str(player_1[2]["points"]), fill = text_color, anchor="mt", font = font_points_now)
+        draw.text(((name_w - box_size / 2), points_h), str(player_2[2]["points"]), fill = text_color, anchor="mt", font = font_points_now)
+        draw.text((box_size / 2 - 130, points_h + 20), str(player_1[1]["points"]), fill = pre_points_color, anchor="mt", font = font_points_old)
+        draw.text(((name_w - box_size / 2 + 130) , points_h + 20), str(player_2[1]["points"]), fill = pre_points_color, anchor="mt", font = font_points_old)
+        draw.text((name_w / 2, result_h - 5), 'Erä 2.', fill = text_color, anchor="mt", font = font_points)
 
     #Throw point
     if throw != " ":
-        font_throw = ImageFont.truetype("arial.ttf", size = 80)
-        draw.text(((name_w / 2) , result_h - 45), str(throw.upper()), fill = (0, 0, 0), anchor="mt", font = font_throw, stroke_width = 2, stroke_fill = (255,255,255))
+        font_throw = ImageFont.truetype(font_select, size = 80)
+        draw.text(((name_w / 2) , points_h), str(throw.upper()), fill = (0, 0, 0), anchor="mt", font = font_throw, stroke_width = 2, stroke_fill = (255,255,255))
+    #img.save('Kuva_tulos.png')
     return img
 
 
@@ -404,7 +425,6 @@ def Make_video(game_id, names, home_first, fps):
     #Kesäpelejä varten
     #frames = get_frames_with_data_henkkari(player_1, player_2)
     #frames = generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats)
-
     print("Luodaan videoita")
     for frame_set in frames:
         video_name = frame_set[0] + "_" + player_1["name"] + "-" + player_2["name"]
