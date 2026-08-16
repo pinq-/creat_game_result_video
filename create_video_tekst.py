@@ -7,6 +7,7 @@ import numpy as np
 import os
 import argparse
 from time import sleep
+import math
 
 
 #HD
@@ -131,7 +132,7 @@ def get_frames_with_data(game_id,  home_first, player_1, player_2, generate_name
 
 
 
-def get_frames_with_data_henkkari(player_1, player_2, home_first = False, summer = False, akateeminen = False): 
+def get_frames_with_data_henkkari(player_1, player_2, home_first = False, summer = False): 
     images_results = ['Game']
     first_throw_n = 0
     second_throw_n = 0
@@ -184,57 +185,105 @@ def get_frames_with_data_henkkari(player_1, player_2, home_first = False, summer
     return [images_results]
 
 
-def generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats):
-    images_results = []
-    first_thorws_n = sum(len(l) for l in first_player)
-    second_thorws_n = sum(len(l) for l in second_player)
+#def generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats):
+def generate_fames_vastaikkain(player_1, player_2, home_first, summer, generate_names = False):
+    images_results = ['Game']
+    images_names  = ['Names']
+    #first_thorws_n = sum(len(l) for l in first_player)
+    #second_thorws_n = sum(len(l) for l in second_player)
     first_throw_n = 0
     second_throw_n = 0
     player_turn_start = 1
     live_result = [[0,0], [0,0]]
-    for game_round in range(2):
-        first_thorws_n = len(first_player[game_round])
-        second_thorws_n = len(second_player[game_round])
+    if home_first:  
+        players = [player_1, player_2]
+    else:
+        players = [player_2, player_1]
+    #How many bats players have in every turn
+    if len(player_1['name']['players']) != 1:
+        turn_max_bats = len(player_1['name']['players']) * 2
+    else:
+        turn_max_bats = 4
+        player_1['name']['team'] = player_1['name']['players'][0]
+    for game_round in range(1,3):
+        #first_thorws_n = len(first_player[game_round])
+        #second_thorws_n = len(second_player[game_round])
         player_turn = 1 - player_turn_start
         player_turn_start = player_turn
-        anti_player_turn = 1
-        player_throw_n = [0,0]
-        thorws = [first_player[game_round], second_player[game_round]]
-        while(player_throw_n[0] < first_thorws_n or player_throw_n[1] < second_thorws_n):
-            point = check_point(str(thorws[player_turn][player_throw_n[player_turn]]), True)
-            #print(players[player_turn], point, player_throw_n[player_turn], kyykkas)
-            player_throw_n[player_turn] += 1
+        anti_player_turn = 1 - player_turn
+        player_name_turn = 0
+        player_throw_counting = [0,0]
+        thorws = [players[0][game_round]["throws"], players[1][game_round]["throws"]]
+        players[player_turn][game_round]['bats'] = turn_max_bats
+        #print("pelin alku:", player_turn,player_turn_start, anti_player_turn)
+        if game_round == 2:
+            players[0][1]["points"] = players[0][1]["result"]
+            players[1][1]["points"] = players[1][1]["result"]
+            images_results += [creat_round_frame('Erä 1.', players[0][1]["result"], players[1][1]["result"], players[0], players[1], summer)] *2
+        while(player_throw_counting[0] < len(thorws[0]) or player_throw_counting[1] < len(thorws[1])):
+            point = check_point(str(thorws[player_turn][player_throw_counting[player_turn]]), True)
+            #print(players[player_turn], point, player_throw_counting[player_turn], kyykkas)
+            player_throw_counting[player_turn] += 1
+            #print("vuoro:",player_throw_counting[player_turn])
             if point[0] != '-':
                 images_results.append(creat_ongoing_game_frame(players[0], players[1], " ", live_result, game_round, summer))
-                return 0
-            scores[player_turn][game_round] += point[2]
-            kyykkas[player_turn][game_round] -= point[1]
-            bats[player_turn][game_round] += 1
-            if (player_throw_n[0] == first_thorws_n and player_throw_n[1] == second_thorws_n):
-                live_result[game_round] = results[game_round]
+                if generate_names and len(player_1['name']['players']) != 1:
+                    images_names.append(creat_name_frame(players[player_turn]['name']['players'][math.floor(player_name_turn/2)], anti_player_turn, summer))
+            players[player_turn][game_round]["points"] += point[2]
+            players[player_turn][game_round]["kyykkas"] -= point[1]
+            players[player_turn][game_round]["bats"] -= 1
+            #print("bats:",game_round,player_turn, player_turn_start, anti_player_turn,players[player_turn][game_round]["bats"])
+            if player_turn == player_turn_start:
+                players[anti_player_turn][game_round]["bats"] += 1
+            if (player_throw_counting[0] == len(thorws[0]) and player_throw_counting[1] == len(thorws[1])):
+                live_result[game_round - 1] = [players[0][game_round]["result"], players[1][game_round]["result"]]
             if point[0] != '-':
-                images_results.append(creat_vastakkain_frame(players, bats, kyykkas, point[0], live_result)) 
-
-            if (player_throw_n[player_turn] < len(thorws[player_turn])):
-                if (player_throw_n[player_turn] % turn_max_bats == 0 and player_throw_n[anti_player_turn] < len(thorws[anti_player_turn])):
+                #images_results.append(creat_vastakkain_frame(players, bats, kyykkas, point[0], live_result)) 
+                images_results.append(creat_ongoing_game_frame(players[0], players[1], point[0], live_result, game_round, summer))
+            player_name_turn += 1
+            if (player_throw_counting[player_turn] < len(thorws[player_turn])):
+                if (player_throw_counting[player_turn] % turn_max_bats == 0 and player_throw_counting[anti_player_turn] < len(thorws[anti_player_turn])):
                     anti_player_turn = player_turn
                     player_turn = 1 - player_turn
-            elif ((player_throw_n[anti_player_turn] -1) < len(thorws[anti_player_turn])):
+                    player_name_turn = 0
+                    if players[player_turn][game_round]["bats"] == players[anti_player_turn][game_round]["bats"]:
+                        #print('uusitaan')
+                        players[player_turn_start][game_round]["bats"] = turn_max_bats
+                        players[anti_player_turn][game_round]["bats"] = 0
+            elif ((player_throw_counting[anti_player_turn] -1) < len(thorws[anti_player_turn])):
                 anti_player_turn = player_turn
                 player_turn = 1 - player_turn
+                player_name_turn = 0
             #return images_results
+    images_results += [creat_round_frame('Erä 2.', players[0][2]["result"], players[1][2]["result"], players[0], players[1], summer)] *2
+    if (players[0][1]["result"] + players[0][2]["result"]) > (players[1][1]["result"] + players[1][2]["result"]):
+        player_1_end = (players[0][1]["result"] + players[0][2]["result"]) - (players[1][1]["result"] + players[1][2]["result"])
+        player_2_end = 0
+    elif (players[0][1]["result"] + players[0][2]["result"]) < (players[1][1]["result"] + players[1][2]["result"]):
+        player_2_end = (players[1][1]["result"] + players[1][2]["result"]) - (players[0][1]["result"] + players[0][2]["result"])
+        player_1_end = 0
+    else:
+        player_1_end = "Tasan"
+        player_2_end = "Tasan"
 
-    return images_results
+    images_results += [creat_round_frame('Lopputulos', player_1_end, player_2_end, players[0], players[1], summer)] *2  
+    return [images_names, images_results]
 
 #GENERATE FAMRES###################################################
-def creat_name_frame(name, home):  
+def creat_name_frame(name, home, summer):  
 
     font = ImageFont.truetype(font_select, size = 32)
     text_color = (0, 0, 0)
     if home:
-        img = Image.open('Nimi_tausta_home.png') 
+        if summer:
+            img = Image.open('Nimi_tausta_kesa_home.png')
+        else:
+            img = Image.open('Nimi_tausta_home.png') 
     else:
-        img = Image.open('Nimi_tausta_away.png') 
+        if summer:
+            img = Image.open('Nimi_tausta_kesa_away.png')
+        else: 
+            img = Image.open('Nimi_tausta_away.png')
     draw = ImageDraw.Draw(img)
     draw.text((5, 40), str(name), fill = text_color, anchor="ls",  font = font)
     #img.show()
@@ -255,8 +304,8 @@ def creat_round_frame(round_name, result_home, result_away, player_1, player_2, 
     box_size = name_w / 2
 
     name_h = 5
-    draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
-    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
+    draw.text((box_size / 2, name_h), str(player_1["name"]['team']), fill = text_color, anchor="mt", font = font_names)
+    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]['team']), fill = text_color, anchor="mt", font = font_names)
 
     round_text_h = 100
     draw.text((box_size, round_text_h), round_name, fill = text_color, anchor="ms",  font = font_round)
@@ -288,8 +337,8 @@ def creat_ongoing_game_frame(player_1, player_2, throw, live_result, rount_int, 
 
     #Team names
     name_h = 5
-    draw.text((box_size / 2, name_h), str(player_1["name"]), fill = text_color, anchor="mt", font = font_names)
-    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]), fill = text_color, anchor="mt", font = font_names)
+    draw.text((box_size / 2, name_h), str(player_1["name"]['team']), fill = text_color, anchor="mt", font = font_names)
+    draw.text(((name_w - box_size / 2) , name_h), str(player_2["name"]['team']), fill = text_color, anchor="mt", font = font_names)
 
     #Bats left
     result_h = name_h + 117
@@ -394,8 +443,8 @@ player_1 = {
     #"bats":0, # Vastakkain
     "kyykkas":20, # Henkkari
     #"kyykkas":40, #Joukkue
-    "throws": [4,4,0,4, 0,0,3,2, 0,1,0,1, 0,0,1], #Manuaalinen syöttö
-    "result": 5
+    "throws": [5,3,1,1, 2,3,1,1], #Manuaalinen syöttö
+    "result": 0
     },    
     2:{
     "points":-40,
@@ -404,10 +453,15 @@ player_1 = {
     #"bats":0, # Vastakkain
     "kyykkas":20, # Henkkari
     #"kyykkas":40, #Joukkue
-    "throws": [0,2,4,2, 3,2,2,1, 1,1,0,0, 0,1,1], #Manuaalinen syöttö
-    "result": 5
+    "throws": [3,1,2,3, 5,0,2,1, 1,1], #Manuaalinen syöttö
+    "result": 0
     },
-    "name": 'Richard Äyräs',
+    "name": {
+        "team": "Rauma",
+        "players":[
+            'Martti k',
+            "Kolo k"
+            ]},
 }
 
 player_2 = {
@@ -418,8 +472,8 @@ player_2 = {
     #"bats":0, # Vastakkain
     "kyykkas":20,# Henkkari
     #"kyykkas":40, #Joukkue
-    "throws": [2,1,1,2, 2,2,0,0, 0,1,2,1, 4,0,0,1, 1], #Manuaalinen syöttö
-    "result": 3
+    "throws": [3,2,5,2, 4,2,2], #Manuaalinen syöttö
+    "result": 6
     },    
     2:{
     "points":-40,
@@ -428,28 +482,54 @@ player_2 = {
     #"bats":0, # Vastakkain
     "kyykkas":20,# Henkkari
     #"kyykkas":40, #Joukkue
-    "throws": [0,2,1,1, 4,2,1,1, 0,0,0,1, 0,1,1,1, 0,1,1,1], #Manuaalinen syöttö
-    "result": -1
+    "throws": [3,3,4,2, 2,1,1,3, 0,1], #Manuaalinen syöttö
+    "result": 2
     },
-    "name": 'Jarmo Kapli',
+    "name": {
+        "team": "Tammer 1",
+        "players":[
+            'Tonttu 1',
+             "Tonttu 2"
+             ]},
 }
 results_duration = [6,2] # seconds, 8s total
 names_duration = [sum(results_duration),sum(results_duration)] # how meany second first throw lasts and second one
 
-def Make_video(game_id, names, home_first, fps, summer, henkkari, akateeminen):
+def Make_video(game_id, names, home_first, fps, summer, henkkari, vastakkain):
     if(henkkari):
         print("luodaan henkkari frameja")
+        player_1[1]["points"] = -40
+        player_1[2]["points"] = -40
+        player_2[2]["points"] = -40
+        player_2[1]["points"] = -40
         #Kesäpelejä varten
-        frames = get_frames_with_data_henkkari(player_1, player_2, home_first, summer, akateeminen)
-        #frames = generate_fames_vastaikkain(first_player, second_player, players, results, kyykkas, bats, scores, turn_max_bats)
+        if vastakkain:
+            player_1[1]["bats"] = 0
+            player_1[2]["bats"] = 0
+            player_2[2]["bats"] = 0
+            player_2[1]["bats"] = 0
+            frames = generate_fames_vastaikkain(player_1, player_2, home_first, summer, names)
+        else:
+            frames = get_frames_with_data_henkkari(player_1, player_2, home_first, summer)
     else:
-    		print("Luodaan kuvia pelistä", game_id)
-    		#pinq.kapsi.fi/kyykka sivulta peli id
-    		frames = get_frames_with_data(game_id, home_first, player_1, player_2, names)
-
+        print("Luodaan kuvia pelistä", game_id)
+        player_1[1]["points"] = -80
+        player_1[2]["points"] = -80
+        player_2[2]["points"] = -80
+        player_2[1]["points"] = -80
+        if vastakkain:
+            player_1[1]["bats"] = 0
+            player_1[2]["bats"] = 0
+            player_2[2]["bats"] = 0
+            player_2[1]["bats"] = 0
+            frames = generate_fames_vastaikkain(player_1, player_2, home_first, summer)
+        else:
+	       #pinq.kapsi.fi/kyykka sivulta peli id
+            frames = get_frames_with_data(game_id, home_first, player_1, player_2, names)
+    
     print("Luodaan videoita")
     for frame_set in frames:
-        video_name = frame_set[0] + "_" + player_1["name"] + "-" + player_2["name"]
+        video_name = frame_set[0] + "_" + player_1["name"]['team'] + "-" + player_2["name"]['team']
         if frame_set[0] == 'Names':
             clip_duration = names_duration
         else:
@@ -460,6 +540,10 @@ def Make_video(game_id, names, home_first, fps, summer, henkkari, akateeminen):
             create_video(frame_set, fps, clip_duration, video_name)
             print("Video valmis nimellä", video_name)
 
+#Henkkari-> 20 kyykkää, 20 mailaa
+#Paripeli-> 20 kyykkää, vastakkain
+#Joukkue-> 40 kyykkää, vastakkain
+#Joukkue akateeminen-> 40 kyykkää, 20 mailaa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script that adds 3 numbers from CMD"
@@ -470,8 +554,8 @@ if __name__ == "__main__":
     parser.add_argument("--home_first", action=argparse.BooleanOptionalAction, help = "Jos pelijärjestys on väärä, vaihda vuoroa tällä")
     parser.add_argument("--summer", action=argparse.BooleanOptionalAction, help ="Käytä kesä tai talvi taustaa")
     parser.add_argument("--henkkari", action=argparse.BooleanOptionalAction, help="Onko henkkari")
-    parser.add_argument("--akateeminen", action=argparse.BooleanOptionalAction, help="Määrittää kuinka pisteitä lasketaan")
+    parser.add_argument("--vastakkain", action=argparse.BooleanOptionalAction, help="Vastustajalla on saman määrä mailoja mitä toinen on käyttänyt")
     args = parser.parse_args()
     if not args.fps:
          args.fps = 1
-    Make_video(args.game_id, args.names, args.home_first, args.fps, args.summer, args.henkkari, args.akateeminen)
+    Make_video(args.game_id, args.names, args.home_first, args.fps, args.summer, args.henkkari, args.vastakkain)
